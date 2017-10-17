@@ -160,6 +160,44 @@ def print_tree(tree, answer):
         print(answer, tree_imp)
 
 
+def training(csv_file):
+    data, targets, features = import_data(filename=csv_file)
+    tree = make_tree(data, targets, features)
+    return tree
+
+
+def tree_output(tree, data_row, features):
+    if type(tree) is not dict:
+        return str(tree)
+    else:
+        for key in tree.keys():
+            f_idx = features.index(key)
+            f_i = data_row[f_idx]
+            return tree_output(tree[key][f_i], data_row, features)
+
+
+def validator(filename, tree):
+
+    with open(filename, 'r') as f:
+        reader = csv.reader(f)
+        raw_data = list(reader)
+    features = raw_data.pop(0)
+    features.remove("class")
+    targets = [row.pop(0) for row in raw_data]
+
+    good = 0
+    n = len(raw_data)
+    row_indx = 0
+    for row in raw_data:
+        output = tree_output(tree, row, features)
+        if output == targets[row_indx]:
+            good += 1
+    
+    return good/float(n)
+        
+
+
+
 def import_data(filename):
     with open(filename, 'r') as f:
         reader = csv.reader(f)
@@ -178,10 +216,17 @@ def import_data(filename):
 
 
 def main():
-    csv_file = sys.argv[1]
-    data, targets, features = import_data(filename=csv_file)
-    tree = make_tree(data, targets, features)
-    print_tree(tree, 'root')
+    train_file = "train_dataset.csv"
+    test_file = "test_dataset.csv"
+
+    decision_tree = training(train_file)
+
+    valid_perc = validator(test_file, decision_tree)
+
+    print(valid_perc)
+
+    print("============================")
+    print_tree(decision_tree, 'root')
 
 
 main()
