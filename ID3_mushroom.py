@@ -78,46 +78,52 @@ def sub_data(data, targets, feature, fi):
 
     return new_targets, new_data
 
-'''
-def make_tree(data, classes, featureNames, totalEntropy):
+
+def make_tree(data, classes, features):
     nData = len(data)
-    nFeatures = len(featureNames)
-    frequency = np.unique(classes, return_counts=True)
-    default = classes[np.argmax(frequency)]
+    nFeatures = len(features)
+    # Have reached an empty branch
+    uniqueT = {}
+    for aclass in classes:
+        if aclass in uniqueT.keys():
+            uniqueT[aclass] += 1
+        else:
+            uniqueT[aclass] = 1
+
+    default = max(uniqueT, key=uniqueT.get)
     if nData == 0 or nFeatures == 0:
-        # Have reached an empty branch
         return default
-    elif classes.count(classes[0]) == nData:
+    elif len(np.unique(classes)) == 1:
         # Only 1 class remains
         return classes[0]
     else:
         # Choose which feature is best
+        totalEntropy = calc_total_entropy(classes)
         gain = np.zeros(nFeatures)
-        for feature in range(1, nFeatures):
+        for feature in range(nFeatures):
             g = calc_feature_gain(data, classes, feature)
             gain[feature] = totalEntropy - g
         bestFeature = np.argmax(gain)
-        tree = {featureNames[bestFeature]: {}}
+        fi_s = np.unique(np.transpose(data)[bestFeature])
+        feat = features.pop(bestFeature)
+        tree = {feat: {}}
         # Find the possible feature values
-        for value in values:
+        for fi in fi_s:
             # Find the datapoints with each feature value
-
+            t, d = sub_data(data, classes, bestFeature, fi)
             # Now recurse to the next level
-            subtree = make_tree(newData, newClasses, newNames, totalEntropy)
+            subtree = make_tree(d, t, features)
             # And on returning, add the subtree on to the tree
-            tree[featureNames[bestFeature]][value] = subtree
+            tree[feat][fi] = subtree
         return tree
-'''
+
+
 def main():
     targets = ['t', 'f', 'f', 'f']
-    total_entropy = calc_total_entropy(targets)
-    data = [[1, 1, 'b', 1], [1, 1, 'b', 1], [1, 1, 'c', 1], [1, 1, 'a', 1]]
-    feature = [1, 2, 3, 4]
-    f_gain = calc_feature_gain(data, targets, feature[1])
-    #tree = make_tree(data, targets, feature, total_entropy)
-    print(np.unique(targets))
-    print(sub_data(data, targets, 2, 'b'))
-    print (total_entropy - f_gain)
+    data = [['v', 'x', 'b', 'x'], ['e', 'x', 'b', 'x'], ['x', 'x', 'c', 'x'], ['x', 'x', 'a', 'x']]
+    features = [0, 1, 2, 3]
+    tree = make_tree(data, targets, features)
+    print(tree)
 
 
 main()
