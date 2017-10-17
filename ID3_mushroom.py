@@ -127,16 +127,37 @@ def make_tree(data, classes, features):
         return tree
 
 
-def print_tree(tree):
+def print_tree(tree, answer):
     """
     :param tree: a dictionary tree implementation
     :return: prints a better visualization of the tree
+    origin3 {feature: leaves]
+    origin2 {feature: origin3, leaves]
+    origin1 {feature: origin2, leaves]
+    root {feature: origin1, leaves]
+    
     """
-    root = tree.keys()
-    for i in tree.keys():
-        print(i)
-        for k in tree[i]:
-            print(k)
+    tree_imp = {}
+    for root in tree.keys():
+        level = []
+        leaves = {}
+        next_keys = []
+        for k in tree[root]:
+            if type(tree[root][k]) is not dict:
+                leaf = tree[root][k]
+                if leaf in leaves:
+                    leaves[leaf].append(k)
+                else:
+                    leaves[leaf] = [k]
+            else:
+                next_keys.append(k)
+                print_tree(tree[root][k], k)
+
+        if len(next_keys) != 0:
+            level.extend(next_keys)
+        level.append(leaves)
+        tree_imp[root] = level
+        print(answer, tree_imp)
 
 
 def import_data(filename):
@@ -160,8 +181,7 @@ def main():
     csv_file = sys.argv[1]
     data, targets, features = import_data(filename=csv_file)
     tree = make_tree(data, targets, features)
-    print(tree)
-    #print_tree(tree)
+    print_tree(tree, 'root')
 
 
 main()
