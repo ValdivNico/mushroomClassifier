@@ -184,7 +184,7 @@ def validator(filename, tree):
     features = raw_data.pop(0)
     features.remove("class")
     targets = [row.pop(0) for row in raw_data]
-
+    print(features)
     good = 0
     n = len(raw_data)
     row_indx = 0
@@ -220,10 +220,9 @@ def main():
     test_file = "test_dataset.csv"
 
     decision_tree = training(train_file)
+    death_toll = 1 - validator(test_file, decision_tree)
 
-    valid_perc = validator(test_file, decision_tree)
-
-    print(valid_perc)
+    print(death_toll)
 
     print("============================")
     print_tree(decision_tree, 'root')
