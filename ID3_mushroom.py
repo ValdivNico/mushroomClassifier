@@ -1,4 +1,6 @@
 import numpy as np
+import csv
+import sys
 
 
 def calc_entropy(p):
@@ -80,6 +82,13 @@ def sub_data(data, targets, feature, fi):
 
 
 def make_tree(data, classes, features):
+    """
+    Generate a decision tree using the ID3 algorithm.
+    :param data: 
+    :param classes: 
+    :param features: 
+    :return: 
+    """
     nData = len(data)
     nFeatures = len(features)
     # Have reached an empty branch
@@ -103,27 +112,56 @@ def make_tree(data, classes, features):
         for feature in range(nFeatures):
             g = calc_feature_gain(data, classes, feature)
             gain[feature] = totalEntropy - g
-        bestFeature = np.argmax(gain)
-        fi_s = np.unique(np.transpose(data)[bestFeature])
-        feat = features.pop(bestFeature)
-        tree = {feat: {}}
+        best = np.argmax(gain)  # index of the best feature
+        fi_s = np.unique(np.transpose(data)[best])
+        feature = features.pop(best)    # Feature Name at that "best" position
+        tree = {feature: {}}
         # Find the possible feature values
         for fi in fi_s:
             # Find the datapoints with each feature value
-            t, d = sub_data(data, classes, bestFeature, fi)
+            t, d = sub_data(data, classes, best, fi)
             # Now recurse to the next level
             subtree = make_tree(d, t, features)
             # And on returning, add the subtree on to the tree
-            tree[feat][fi] = subtree
+            tree[feature][fi] = subtree
         return tree
 
 
+def print_tree(tree):
+    """
+    :param tree: a dictionary tree implementation
+    :return: prints a better visualization of the tree
+    """
+    root = tree.keys()
+    for i in tree.keys():
+        print(i)
+        for k in tree[i]:
+            print(k)
+
+
+def import_data(filename):
+    with open(filename, 'r') as f:
+        reader = csv.reader(f)
+        raw_data = list(reader)
+    features = raw_data.pop(0)
+    features.remove("class")
+    targets = [row.pop(0) for row in raw_data]
+
+    test1 = len(raw_data[0]) == len(features)
+    test2 = len(raw_data) == len(targets)
+    if test1 and test2:
+        return raw_data, targets, features
+    else:
+        print("ERROR in data processing")
+        exit(-1)
+
+
 def main():
-    targets = ['t', 'f', 'f', 'f']
-    data = [['v', 'x', 'b', 'x'], ['e', 'x', 'b', 'x'], ['x', 'x', 'c', 'x'], ['x', 'x', 'a', 'x']]
-    features = [0, 1, 2, 3]
+    csv_file = sys.argv[1]
+    data, targets, features = import_data(filename=csv_file)
     tree = make_tree(data, targets, features)
     print(tree)
+    #print_tree(tree)
 
 
 main()
