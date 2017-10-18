@@ -1,7 +1,5 @@
 import numpy as np
 import csv
-import sys
-
 
 def calc_entropy(p):
     if p != 0:
@@ -192,11 +190,10 @@ def validator(filename, tree):
         output = tree_output(tree, row, features)
         if output == targets[row_indx]:
             good += 1
+        row_indx += 1
     
     return good/float(n)
         
-
-
 
 def import_data(filename):
     with open(filename, 'r') as f:
