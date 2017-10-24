@@ -1,6 +1,7 @@
 import numpy as np
 import csv
 
+
 def calc_entropy(p):
     if p != 0:
         return -p * np.log2(p)
@@ -222,8 +223,6 @@ def main():
     print_tree(decision_tree, 'root')
     print("============================")
     print("percent of correct classifications:", perc_correct)
-
-
 
 
 main()

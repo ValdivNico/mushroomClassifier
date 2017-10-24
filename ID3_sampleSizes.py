@@ -60,6 +60,14 @@ def calc_total_entropy(targets):
 
 
 def sub_data(dataset, targets, feature, fi):
+    """
+    Calculates the subset of data that contains
+    :param dataset: The training dataset
+    :param targets: list of targets
+    :param feature: feature index
+    :param fi: fixed value of the feature
+    :return: subset of data that contains a particular value for a fixed feature
+    """
     new_data = []
     new_targets = []
     nFeatures = len(dataset[0])
@@ -161,41 +169,69 @@ def print_tree(tree, answer):
 
 
 def training(dataset, features):
+    """
+    :param dataset: The training dataset including targets
+    :param features: list of features
+    :return: a tree produced by ID3 algorithm
+    """
     targets = [row.pop(0) for row in dataset]
     tree = make_tree(dataset, targets, features)
     return tree
 
 
 def tree_output(tree, data_row, features):
+    """
+    :param tree: the decision tree resulting from training
+    :param data_row: an observation in the testing dataset
+    :param features: list of features
+    :return: target of the branch followed by the row or if the feature key was never observed, then it returns "N/A"
+    """
     if type(tree) is not dict:
         return str(tree)
     else:
         for key in tree.keys():
             f_idx = features.index(key)
             f_i = data_row[f_idx]
-            return tree_output(tree[key][f_i], data_row, features)
+            try:
+                return tree_output(tree[key][f_i], data_row, features)
+            except KeyError as ke:
+                return "N/A"
 
 
 def validator_seq(dataset, features, tree):
+    """
+    :param dataset: The testing dataset including targets
+    :param features: a list of feature names
+    :param tree: a decision tree
+    :return: percentage of correct classifications, and the number of unknown classifications.
+    """
     targets = [row.pop(0) for row in dataset]
     good = 0
+    unknowns = 0
     n = len(dataset)
     row_indx = 0
+
     for row in dataset:
         output = tree_output(tree, row, features)
-        if output == targets[row_indx] or output is not "?":
+        if output == targets[row_indx]:
             good += 1
+        elif output == "N/A":
+            unknowns += 1
         row_indx += 1
+    return good / float(n), unknowns
 
-    return good / float(n)
 
-
-def import_data(filename):
+def import_data(filename, targetFeat):
+    """
+    Importing the data from csv
+    :param filename: the name of the csv file
+    :return: the dataset including targets as a list of lists and a list of feature names
+    """
     with open(file=filename, mode='r') as f:
         reader = csv.reader(f)
         dataset = list(reader)
     features = dataset.pop(0)
-    features.remove("class")
+    features.remove(targetFeat)
     if len(dataset[0])-1 == len(features):
         return dataset, features
     else:
@@ -205,34 +241,32 @@ def import_data(filename):
 
 def run_tests(train_alphas, dataset, features):
     nData = len(dataset)
-    data_perm = (np.random.permutation(dataset)).tolist()
-    features_train = copy.deepcopy(features)
-
-    scores = []
-    trees = []
-
-    for train_alpha in train_alphas:
-        train_size = int(np.ceil(nData * train_alpha))
-        train_data = data_perm[0:train_size-1]
-        test_data = data_perm[train_size:nData]
-        decision_tree = training(dataset=train_data, features=features_train)
-        print_tree(decision_tree, "root")
-        perc_correct = validator_seq(dataset=test_data, features=features, tree=decision_tree)
-        scores.append(perc_correct)
-        trees.append(decision_tree)
-
-    return trees, scores
+    Scores = []
+    for i in range(10):
+        data_perm = (np.random.permutation(dataset)).tolist()
+        for train_alpha in train_alphas:
+            feat_train = copy.deepcopy(features)
+            feat_test = copy.deepcopy(features)
+            train_size = int(np.ceil(nData * train_alpha))
+            train_data = copy.deepcopy(data_perm[0:train_size])
+            test_data = copy.deepcopy(data_perm[train_size:nData])
+            decision_tree = training(dataset=train_data, features=feat_train)
+            perc_correct, num_unknown = validator_seq(dataset=test_data, features=feat_test, tree=decision_tree)
+            row = [train_alpha, i, perc_correct, num_unknown]
+            Scores.append(row)
+    return Scores
 
 
 def main():
+    """
+    csv_file contains the name of the data in csv format.
+    alphas is a list of percentages to run test on each percent amount of training data
+    :return: prints the Scores -- can be changed to print or export as csv
+    """
     csv_file = "mushrooms.csv"
-    data, featName = import_data(filename=csv_file)
-    alphas = [0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
-    scores, trees = run_tests(train_alphas=alphas, dataset=data, features=featName)
-    print("============================")
-    #print_tree(dec_tree, 'root')
-    print("============================")
-    #print("percent of correct classifications:", score)
+    data, featName = import_data(filename=csv_file, targetFeat="class")
+    alphas = [0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.05]
+    scores = run_tests(alphas, data, featName)
     print(scores)
 
 
