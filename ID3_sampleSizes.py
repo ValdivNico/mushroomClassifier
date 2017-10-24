@@ -1,5 +1,6 @@
 import numpy as np
 import csv
+import copy
 
 
 def calc_entropy(p):
@@ -195,7 +196,7 @@ def import_data(filename):
         dataset = list(reader)
     features = dataset.pop(0)
     features.remove("class")
-    if len(dataset[0]) == len(features):
+    if len(dataset[0])-1 == len(features):
         return dataset, features
     else:
         print("ERROR in data processing")
@@ -204,13 +205,16 @@ def import_data(filename):
 
 def run_tests(train_alpha, dataset, features):
     nData = len(dataset)
-    train_size = np.ceil(nData*train_alpha)
-    data_perm = np.random.permutation(dataset)
-
+    train_size = int(np.ceil(nData*train_alpha))
+    data_perm = (np.random.permutation(dataset)).tolist()
     train_data = data_perm[0:train_size-1]
-    test_data = data_perm[train_alpha:]
-    decision_tree = training(train_data, features)
-    perc_correct = validator_seq(test_data, decision_tree)
+    test_data = data_perm[train_size:nData]
+
+    features_train = copy.deepcopy(features)
+    print(features)
+    decision_tree = training(dataset=train_data, features=features_train)
+    print(features)
+    perc_correct = validator_seq(dataset=test_data, features=features, tree=decision_tree)
 
     return decision_tree, perc_correct
 
