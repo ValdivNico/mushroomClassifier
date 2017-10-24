@@ -183,7 +183,7 @@ def validator_seq(dataset, features, tree):
     row_indx = 0
     for row in dataset:
         output = tree_output(tree, row, features)
-        if output == targets[row_indx]:
+        if output == targets[row_indx] or output is not "?":
             good += 1
         row_indx += 1
 
@@ -203,30 +203,37 @@ def import_data(filename):
         exit(-1)
 
 
-def run_tests(train_alpha, dataset, features):
+def run_tests(train_alphas, dataset, features):
     nData = len(dataset)
-    train_size = int(np.ceil(nData*train_alpha))
     data_perm = (np.random.permutation(dataset)).tolist()
-    train_data = data_perm[0:train_size-1]
-    test_data = data_perm[train_size:nData]
-
     features_train = copy.deepcopy(features)
-    print(features)
-    decision_tree = training(dataset=train_data, features=features_train)
-    print(features)
-    perc_correct = validator_seq(dataset=test_data, features=features, tree=decision_tree)
 
-    return decision_tree, perc_correct
+    scores = []
+    trees = []
+
+    for train_alpha in train_alphas:
+        train_size = int(np.ceil(nData * train_alpha))
+        train_data = data_perm[0:train_size-1]
+        test_data = data_perm[train_size:nData]
+        decision_tree = training(dataset=train_data, features=features_train)
+        print_tree(decision_tree, "root")
+        perc_correct = validator_seq(dataset=test_data, features=features, tree=decision_tree)
+        scores.append(perc_correct)
+        trees.append(decision_tree)
+
+    return trees, scores
 
 
 def main():
     csv_file = "mushrooms.csv"
     data, featName = import_data(filename=csv_file)
-    dec_tree, score = run_tests(train_alpha=0.8, dataset=data, features=featName)
+    alphas = [0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
+    scores, trees = run_tests(train_alphas=alphas, dataset=data, features=featName)
     print("============================")
-    print_tree(dec_tree, 'root')
+    #print_tree(dec_tree, 'root')
     print("============================")
-    print("percent of correct classifications:", score)
+    #print("percent of correct classifications:", score)
+    print(scores)
 
 
 main()
